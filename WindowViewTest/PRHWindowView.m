@@ -72,6 +72,16 @@
 		{ 0.0, contentRect.size.height },
 		titleSize
 	};
+	/*This doesn't actually work—the shape is empty.
+
+	err = HIThemeGetWindowShape(&contentRect, &windowDrawInfo, kWindowTitleTextRgn, &shape);
+	if (err == noErr) {
+		HIShapeGetBounds(shape, &titleRect);
+		NSLog(@"%@", NSStringFromRect(titleRect));
+
+		CFRelease(shape);
+	}
+	 */
 	struct HIThemeTextInfo titleTextInfo = {
 		.version = 1,
 		.state = kThemeStateActive,
