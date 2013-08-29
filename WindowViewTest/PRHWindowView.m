@@ -73,6 +73,7 @@
 	if (err == noErr) {
 		HIShapeReplacePathInCGContext(shape, context);
 		CGContextFillPath(context);
+		CFRelease(shape);
 	}
 
 	CGContextEndTransparencyLayer(context);
