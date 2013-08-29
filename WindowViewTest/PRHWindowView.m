@@ -25,13 +25,11 @@
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
-	static const CGFloat shadowRadius = 20.0;
 	CGContextRef context = [[NSGraphicsContext currentContext] graphicsPort];
-	CGContextSetShadowWithColor(context, CGSizeZero, shadowRadius, CGColorGetConstantColor(kCGColorBlack));
-	CGContextBeginTransparencyLayer(context, NULL);
 
 	NSRect frameRect = self.bounds;
 
+	static const CGFloat shadowRadius = 20.0;
 	CGContextTranslateCTM(context, shadowRadius, shadowRadius);
 	frameRect.size.width -= shadowRadius * 2.0;
 	frameRect.size.height -= shadowRadius * 2.0;
@@ -49,6 +47,25 @@
 		.titleHeight = titleSize.height,
 		.titleWidth = titleSize.width,
 	};
+
+	CGContextSetShadowWithColor(context, CGSizeZero, shadowRadius, CGColorGetConstantColor(kCGColorBlack));
+
+	CGContextBeginTransparencyLayer(context, NULL);
+
+	HIThemeSetFill(kThemeBrushModelessDialogBackgroundActive, /*info*/ NULL, context, kHIThemeOrientationInverted);
+	HIShapeRef shape = NULL;
+	OSStatus err = HIThemeGetWindowShape(&contentRect, &windowDrawInfo, kWindowStructureRgn, &shape);
+	if (err == noErr) {
+		//Apparently HIShapeReplacePathInCGContext isn't subject to the CTM, so we need to re-translate it.
+		HIMutableShapeRef mutableShape = HIShapeCreateMutableCopy(shape);
+		HIShapeOffset(mutableShape, 0.0, shadowRadius);
+		HIShapeReplacePathInCGContext(mutableShape, context);
+		CGContextFillPath(context);
+		CFRelease(mutableShape);
+
+		CFRelease(shape);
+	}
+
 	HIThemeDrawWindowFrame(&contentRect, &windowDrawInfo, context, kHIThemeOrientationInverted, /*outTitleRect*/ NULL);
 
 	NSRect titleRect = {
@@ -66,15 +83,6 @@
 		.truncationMaxLines = 1,
 	};
 	HIThemeDrawTextBox((__bridge CFTypeRef)(_title), &titleRect, &titleTextInfo, context, kHIThemeOrientationInverted);
-
-	HIThemeSetFill(kThemeBrushModelessDialogBackgroundActive, /*info*/ NULL, context, kHIThemeOrientationInverted);
-	HIShapeRef shape = NULL;
-	OSStatus err = HIThemeGetWindowShape(&contentRect, &windowDrawInfo, kWindowContentRgn, &shape);
-	if (err == noErr) {
-		HIShapeReplacePathInCGContext(shape, context);
-		CGContextFillPath(context);
-		CFRelease(shape);
-	}
 
 	CGContextEndTransparencyLayer(context);
 }
